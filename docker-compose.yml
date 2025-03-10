@@ -1,20 +1,45 @@
-version: '3.8'
+version: "3.7"
+
 services:
-  web:
-    build: .
+  carlemany-backend:
+    build:
+      context: .
+      target: carlemany-backend-base
+    image: carlemany-backend-base
+    volumes:
+      - type: bind
+        source: .
+        target: /carlemany-backend
     ports:
-      - "8080:8080"
-  db:
-    image: mysql:5.7
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: mydb
-    ports:
-      - "3306:3306"
-  phpmyadmin:
-    image: phpmyadmin/phpmyadmin
-    environment:
-      PMA_HOST: db
-      MYSQL_ROOT_PASSWORD: root
-    ports:
-      - "8081:80"
+      - "8000:80"
+    networks:
+      - carlemany-net
+
+  black:
+    image: carlemany-backend-base:latest
+    volumes:
+      - type: bind
+        source: ./
+        target: /carlemany-backend
+        read_only: true
+    entrypoint: sh -c "black --config .black --check --diff ."
+
+  test: &test
+    image: carlemany-backend-dev:latest
+    env_file:
+     - .env
+    volumes:
+      - type: bind
+        source: ./
+        target: /carlemany-backend
+    networks:
+      - carlemany-net
+    entrypoint: pytest --maxfail=10
+
+  test-cov:
+    <<: *test
+    entrypoint: pytest --maxfail=10 --cov --cov-report=term --cov-report=html --junitxml=tests/test-results/junit.xml
+
+
+networks:
+  carlemany-net:

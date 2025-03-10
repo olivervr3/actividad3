@@ -1,10 +1,15 @@
-FROM python:3.8-slim
+FROM tiangolo/uvicorn-gunicorn:python3.10 AS carlemany-backend-base
 
-WORKDIR /app
+RUN pip install --upgrade pip
 
-COPY requirements.txt requirements.txt
-RUN pip install -r requirements.txt
+COPY requirements/base.txt /tmp/requirements/
 
-COPY . .
+RUN pip install -r /tmp/requirements/base.txt
 
-CMD ["python", "app.py"]
+RUN mkdir /backend-backend
+
+WORKDIR /carlemany-backend
+
+COPY . ./
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80", "--log-level", "error", "--lifespan", "on"]
